@@ -135,9 +135,6 @@ public class MainActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
             location_button.performClick();
         }
-        else{
-            location_button.performClick();
-        }
 
         //setting the drop down list of time choices to previously selected time, if there was a selection
         SharedPreferences preferences = getSharedPreferences("time", 0);
@@ -170,6 +167,8 @@ public class MainActivity extends AppCompatActivity {
                 if(cal.getTimeInMillis() <= System.currentTimeMillis()){
                     cal.add(Calendar.DAY_OF_MONTH, 1);
                 }
+
+                location_button.performClick();
 
                 //line where we set the alarm
                 alarmMgr.setRepeating(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(),AlarmManager.INTERVAL_DAY, alarmIntent);
