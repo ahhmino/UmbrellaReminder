@@ -1,0 +1,29 @@
+<resources>
+    <string name="app_name">Umbrella Reminder</string>
+    <string name="refresh">Refresh</string>
+    <string name="umbrella_yes">Might need an umbrella today!</string>
+    <string name="umbrella_no">Should be a dry day today</string>
+    <string name="settings">Settings</string>
+    <string name="main_page">Back</string>
+    <string name="title_activity_settings">Settings</string>
+
+    <!-- Preference Titles -->
+    <string name="messages_header">Messages</string>
+    <string name="sync_header">Sync</string>
+
+    <!-- Messages Preferences -->
+    <string name="signature_title">Your signature</string>
+    <string name="reply_title">Default reply action</string>
+    <string name="time_drop_down">What time would you like to be reminded?</string>
+
+    <!-- Sync Preferences -->
+    <string name="sync_title">Sync email periodically</string>
+    <string name="attachment_title">Download incoming attachments</string>
+    <string name="attachment_summary_on">Automatically download attachments for incoming emails
+    </string>
+    <string name="attachment_summary_off">Only download attachments when manually requested</string>
+
+    <!-- Notification Stuff -->
+    <string name="channel_name">Umbrella Reminder</string>
+    <string name="channel_description">Notification channel used for Umbrella Reminder App</string>
+</resources>

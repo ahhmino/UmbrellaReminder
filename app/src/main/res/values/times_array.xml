@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="times">
+        <item>5:00AM</item>
+        <item>5:30AM</item>
+        <item>6:00AM</item>
+        <item>6:30AM</item>
+        <item>7:00AM</item>
+        <item>7:30AM</item>
+        <item>8:00AM</item>
+        <item>8:30AM</item>
+        <item>9:00AM</item>
+        <item>9:30AM</item>
+    </array>
+</resources>
