@@ -1,0 +1,7 @@
+<animation-list android:id="@+id/selected"
+    android:oneshot="false"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+  <item android:drawable="@drawable/rain_kf0" android:duration="200" />
+  <item android:drawable="@drawable/rain_kf1" android:duration="200" />
+  <item android:drawable="@drawable/rain_kf2" android:duration="200" />
+</animation-list>

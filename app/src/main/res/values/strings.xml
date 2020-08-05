@@ -23,7 +23,10 @@
     </string>
     <string name="attachment_summary_off">Only download attachments when manually requested</string>
 
-    <!-- Notification Stuff -->
     <string name="channel_name">Umbrella Reminder</string>
     <string name="channel_description">Notification channel used for Umbrella Reminder App</string>
+    <string name="tap_here_to_set_a_reminder_time">Tap here to set a reminder time</string>
+    <string name="loading_your_current_location">Loading your current location…</string>
+    <string name="loading_weather">Loading weather…</string>
+    <string name="selected_reminder_time">Selected reminder time: %s</string>
 </resources>

@@ -1,254 +1,190 @@
 package com.umbrellareminder;
 
-import androidx.annotation.RequiresApi;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.app.AlarmManager;
-import android.app.AlertDialog;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.content.Context;
+import android.app.TimePickerDialog;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.media.MediaPlayer;
-import android.net.Uri;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Shader;
+import android.graphics.drawable.AnimationDrawable;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.Spinner;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.VideoView;
+import android.widget.TimePicker;
+import android.widget.Toast;
 
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.android.volley.Request;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.android.libraries.places.api.Places;
+import com.google.android.libraries.places.api.model.Place;
+import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest;
+import com.google.android.libraries.places.api.net.FindCurrentPlaceResponse;
+import com.google.android.libraries.places.api.net.PlacesClient;
+import com.google.firebase.functions.FirebaseFunctions;
+import com.google.firebase.functions.HttpsCallableResult;
+
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static java.lang.Math.abs;
+import static java.lang.Math.min;
 
-@RequiresApi(api = Build.VERSION_CODES.O)
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements TimePickerDialog.OnTimeSetListener {
 
-    public static String AppId = "8cec4771477552dd0f2149350b290e4e";
-
-    private static TextView display_location;
-    private static TextView message;
-    private TextView prompt;
-    private Button location_button;
-    private VideoView video;
-    private double latitude;
-    private double longitude;
-    private Spinner time_list;
-    private String remind_time;
-    private String CHANNEL_ID = "umbrella_reminder";
-    private GPSTracker gps;
-
-    private AlarmManager alarmMgr;
-    private PendingIntent alarmIntent;
-
-    boolean mIsReceiverRegistered = false;
-    AlarmReceiver mReceiver = null;
-
-    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if(savedInstanceState != null) {
-            super.onRestoreInstanceState(savedInstanceState);
-        }
         setContentView(R.layout.activity_main);
 
-        //getting al UI elements and bringing them in front of background video
-        location_button = findViewById(R.id.refresh_location);
-        display_location = findViewById(R.id.location);
-        message = findViewById(R.id.message);
-        video = findViewById(R.id.video);
-        time_list = findViewById(R.id.time_list);
-        prompt = findViewById(R.id.time_select_prompt);
-
-        location_button.bringToFront();
-        display_location.bringToFront();
-        message.bringToFront();
-        prompt.bringToFront();
-        time_list.bringToFront();
-
-        //background video running + set looping
-        Uri uri = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.rain);
-        video.setVideoURI(uri);
-        video.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-            @Override
-            public void onPrepared(MediaPlayer mediaPlayer) {
-                mediaPlayer.setLooping(true);
-            }
-        });
-        video.start();
-
-        //alarm initialization, NOT setting
-        Intent intent = new Intent(this,AlarmReceiver.class);
-        //need this flag for the alarm to be in the 'foreground', so user can receive notifications after app is killed
-        intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
-        alarmIntent = PendingIntent.getBroadcast(MainActivity.this, 0, intent, 0);
-        alarmMgr = (AlarmManager)MainActivity.this.getSystemService(Context.ALARM_SERVICE);
-
+        Button location_button = findViewById(R.id.refresh_location);
         location_button.setOnClickListener(new View.OnClickListener() {
-
             @Override
             public void onClick(View arg0) {
-                // create class object
-                gps = new GPSTracker(MainActivity.this);
-
-                // check if GPS enabled
-                if (gps.canGetLocation()) {
-                    latitude = gps.getLatitude();
-                    longitude = gps.getLongitude();
-
-                    getFutureData(latitude, longitude, MainActivity.this, new Response() {
-                        @Override
-                        public void onSuccess(boolean success) {
-                        }
-                    });
-
-                } else {
-                    // can't get location
-                    gps.showSettingsAlert();
-                }
-
+                getFutureData();
             }
         });
+
+        SharedPreferences preferences = getSharedPreferences("Prefs", 0);
+        String savedLoc = preferences.getString("loc_string", "Loading location...");
+
+        TextView location = findViewById(R.id.location);
+        location.setText(savedLoc);
+
+        Button timeButton = findViewById(R.id.time_selector_label);
+        String savedTime = preferences.getString("notify_time", "00:00 AM");
+        if(savedTime.equals("00:00 AM")) {
+            timeButton.setText(R.string.tap_here_to_set_a_reminder_time);
+        }
+        else {
+            timeButton.setText(String.format(getString(R.string.selected_reminder_time), savedTime));
+        }
 
         //location permissions
-        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
-            location_button.performClick();
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION}, 1);
+            }
+            else {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+            }
+        }
+        else {
+            getFutureData();
         }
 
-        //setting the drop down list of time choices to previously selected time, if there was a selection
-        SharedPreferences preferences = getSharedPreferences("time", 0);
-        int choice = preferences.getInt("choice", -1);
-        if(choice != -1){
-            time_list.setSelection(choice);
-        }
-
-        time_list.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        timeButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                remind_time = time_list.getSelectedItem().toString();
+            public void onClick(View view) {
+                TimePickerFragment newFragment = new TimePickerFragment();
+                newFragment.setListener(MainActivity.this);
+                newFragment.show(getSupportFragmentManager(), newFragment.getTag());
+            }
+        });
 
-                //saving selected time choice to be set when app is reopened
-                int selected_time = time_list.getSelectedItemPosition();
-                SharedPreferences time = getSharedPreferences("time",0);
-                SharedPreferences.Editor editor = time.edit();
-                editor.putInt("choice", selected_time);
-                editor.apply();
+    }
 
-                int hour = Integer.parseInt(Character.toString(remind_time.charAt(0)));
-                int minute = Integer.parseInt(remind_time.substring(2,4));
+    void getFutureData() {
+        ProgressBar refreshProgress = findViewById(R.id.refresh_progress);
+        refreshProgress.setVisibility(View.VISIBLE);
+        FirebaseFunctions.getInstance().getHttpsCallable("getKeys").call().addOnCompleteListener(new OnCompleteListener<HttpsCallableResult>() {
+            @Override
+            public void onComplete(@NonNull Task<HttpsCallableResult> task) {
+                if(task.isSuccessful() && task.getResult() != null && task.getResult().getData() != null) {
+                    Map<String, Object> data = (Map<String, Object>) task.getResult().getData();
+                    String placesKey = data.get("placesKey").toString();
+                    String weatherKey = data.get("openWeatherKey").toString();
 
-                Calendar cal = Calendar.getInstance();
-                cal.setTimeInMillis(System.currentTimeMillis());
-                cal.set(Calendar.HOUR_OF_DAY, hour);
-                cal.set(Calendar.MINUTE, minute);
-                cal.set(Calendar.SECOND, 0);
+                    Places.initialize(getApplicationContext(), placesKey);
+                    PlacesClient placesClient = Places.createClient(getApplicationContext());
 
-                if(cal.getTimeInMillis() <= System.currentTimeMillis()){
-                    cal.add(Calendar.DAY_OF_MONTH, 1);
+                    List<Place.Field> placeFields = Collections.singletonList(Place.Field.LAT_LNG);
+                    FindCurrentPlaceRequest request = FindCurrentPlaceRequest.newInstance(placeFields);
+
+                    if(ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                        Task<FindCurrentPlaceResponse> placeResponse = placesClient.findCurrentPlace(request);
+                        placeResponse.addOnCompleteListener(placesTask -> {
+                            if (placesTask.isSuccessful() && placesTask.getResult() != null && placesTask.getResult().getPlaceLikelihoods().size() > 0){
+                                FindCurrentPlaceResponse placesTaskResult = placesTask.getResult();
+                                Place place = placesTaskResult.getPlaceLikelihoods().get(0).getPlace();
+                                double lat = place.getLatLng().latitude;
+                                double lon = place.getLatLng().longitude;
+
+                                String url = "http://api.openweathermap.org/data/2.5/forecast?lat=" + lat
+                                        + "&lon=" + lon
+                                        + "&appid=" + weatherKey;
+                                RequestQueue requestQueue = Volley.newRequestQueue(getApplicationContext());
+                                StringRequest stringRequest = new StringRequest(Request.Method.GET, url, response -> {
+                                    refreshProgress.setVisibility(View.INVISIBLE);
+                                    String location_info = response.substring(response.indexOf("city"));
+                                    String city = location_info.substring(location_info.indexOf("name") + 7, location_info.indexOf("coord") - 3);
+                                    String country = location_info.substring(location_info.indexOf("country") + 10, location_info.indexOf("population") - 3);
+                                    location_info = "Current Location: " + city + ", " + country;
+                                    SharedPreferences sharedPreferences = getSharedPreferences("Prefs", 0);
+                                    sharedPreferences.edit().putString("loc_string", location_info).apply();
+
+                                    setMessage(response);
+                                    setLocation(response);
+
+                                }, error -> Log.d("ERROR", "Connection Error"));
+
+                                requestQueue.add(stringRequest);
+                            }
+                            else {
+                                refreshProgress.setVisibility(View.INVISIBLE);
+                                Toast.makeText(getApplicationContext(), "Failed to get location and weather info", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    } else {
+                        refreshProgress.setVisibility(View.INVISIBLE);
+                        Toast.makeText(getApplicationContext(), "App requires background location permission to check weather", Toast.LENGTH_LONG).show();
+                    }
                 }
-
-                location_button.performClick();
-
-                //line where we set the alarm
-                alarmMgr.setRepeating(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(),AlarmManager.INTERVAL_DAY, alarmIntent);
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> adapterView) {
-
+                else {
+                    refreshProgress.setVisibility(View.INVISIBLE);
+                    Toast.makeText(getApplicationContext(), "Failed to get location and weather info", Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }
 
-    //simple functions used to determine whether to update UI or not (only update if activity is visible)
-    public static boolean isActivityVisible() {
-        return activityVisible;
-    }
-
-    public static void activityResumed() {
-        activityVisible = true;
-    }
-
-    public static void activityPaused() {
-        activityVisible = false;
-    }
-
-    private static boolean activityVisible;
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        MainActivity.activityPaused();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        Uri uri = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.rain);
-        video.setVideoURI(uri);
-        video.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-            @Override
-            public void onPrepared(MediaPlayer mediaPlayer) {
-                mediaPlayer.setLooping(true);
-            }
-        });
-        video.start();
-        //registering the receiver so the receiver can run after app destroy
-        if (!mIsReceiverRegistered) {
-            if (mReceiver == null)
-                mReceiver = new AlarmReceiver();
-            this.registerReceiver(mReceiver, new IntentFilter("AlarmReceiver"));
-            mIsReceiverRegistered = true;
-        }
-        MainActivity.activityResumed();
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    void getFutureData(double lat, double lon, Context context, Response callback) {
-        String url = "http://api.openweathermap.org/data/2.5/forecast?lat=" + lat
-                + "&lon=" + lon
-                + "&appid=" + AppId;
-        RequestQueue requestQueue = Volley.newRequestQueue(context);
-        //Create an error listener to handle errors appropriately.
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, url, response -> {
-            setLocation(response);
-            //need a callback because StringRequest runs in another thread from the rest of the activity
-            callback.onSuccess(setMessage(response));
-        }, error -> Log.d("ERROR", "Connection Error"));
-
-        requestQueue.add(stringRequest);
-    }
-
-    boolean setMessage(String response){
+    private void setMessage(String response) {
         //get today's date
-        boolean bring = false;
-        boolean visible = isActivityVisible();
+        SharedPreferences preferences = getSharedPreferences("Prefs", 0);
+        boolean bring = preferences.getBoolean("bring", false);
 
         //this section to retrieve current and next dates
         //need both because JSON response is in UTC, have to account for timezone differences
         //which might stretch today's local forecast into tomorrow UTC
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
 
         Calendar cal = Calendar.getInstance();
         long offset_hours = TimeUnit.HOURS.convert(cal.getTimeZone().getRawOffset(), TimeUnit.MILLISECONDS);
@@ -274,31 +210,115 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        //only updating UI if application is visible
-        if (bring && visible) {
+        TextView message = findViewById(R.id.message);
+        if (bring) {
             message.setText(R.string.umbrella_yes);
         }
-        else if (visible){
+        else{
             message.setText(R.string.umbrella_no);
         }
 
-        return bring;
     }
 
     void setLocation(String response) {
-        if(isActivityVisible()){
-            //string manipulation of the JSON response to get user's location
-            String location_info = response.substring(response.indexOf("city"));
-            String city = location_info.substring(location_info.indexOf("name") + 7,location_info.indexOf("coord") - 3);
-            String country = location_info.substring(location_info.indexOf("country") + 10, location_info.indexOf("population") - 3);
-            location_info = "Current Location: " + city + ", " + country;
+        //string manipulation of the JSON response to get user's location
+        String location_info = response.substring(response.indexOf("city"));
+        String city = location_info.substring(location_info.indexOf("name") + 7, location_info.indexOf("coord") - 3);
+        String country = location_info.substring(location_info.indexOf("country") + 10, location_info.indexOf("population") - 3);
+        location_info = "Current Location: " + city + ", " + country;
 
-            if(location_info.contains("Earth")){
-                //restarting from the top, "earth" means user's location was null, ie 0 lat, 0 lon, no good
-                location_button.performClick();
-            }
-            display_location.setText(location_info);
+        if (location_info.contains("Earth")) {
+            //restarting from the top, "earth" means user's location was null, ie 0 lat, 0 lon, no good
+            Button location_button = findViewById(R.id.refresh_location);
+            location_button.performClick();
         }
+        TextView display_location = findViewById(R.id.location);
+        display_location.setText(location_info);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if(permissions.length == 2) {
+                getFutureData();
+            }
+            else {
+                Toast.makeText(this, "Cannot get weather and location info without background location permissions", Toast.LENGTH_LONG).show();
+            }
+        }
+        else {
+            if(permissions.length == 1) {
+                getFutureData();
+            }
+            else {
+                Toast.makeText(this, "Cannot get weather and location info without location permissions", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    @Override
+    public void onTimeSet(TimePicker timePicker, int i, int i1) {
+        int hourOfDay = i;
+        int minute = i1;
+
+        String timeString = get_time_string(hourOfDay, minute);
+        SharedPreferences settings = getSharedPreferences("Prefs", 0);
+        settings.edit().putString("notify_time", timeString).apply();
+
+        Button time_button = findViewById(R.id.time_selector_label);
+        time_button.setText(String.format(getString(R.string.selected_reminder_time), get_time_string(hourOfDay, minute)));
+
+        Calendar first_alarm = Calendar.getInstance();
+        first_alarm.setTimeInMillis(System.currentTimeMillis());
+        first_alarm.set(Calendar.HOUR_OF_DAY, hourOfDay);
+        first_alarm.set(Calendar.MINUTE, minute);
+        first_alarm.set(Calendar.SECOND, 0);
+        if(first_alarm.get(Calendar.HOUR_OF_DAY) <= Calendar.getInstance().get(Calendar.HOUR_OF_DAY)){
+            first_alarm.add(Calendar.DAY_OF_MONTH, 1);
+        }
+
+        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+        Intent alarmIntent = new Intent(getApplicationContext(), AlarmReceiver.class);
+        PendingIntent nextPendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, alarmIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        alarmManager.cancel(nextPendingIntent);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, first_alarm.getTimeInMillis(), nextPendingIntent);
+        }
+        else {
+            alarmManager.setExact(AlarmManager.RTC_WAKEUP, first_alarm.getTimeInMillis(), nextPendingIntent);
+        }
+    }
+
+    private String get_time_string(int hour, int minute){
+        boolean pm = false;
+        String time;
+
+        if(hour >= 12){
+            if(hour > 12) {
+                hour -= 12;
+            }
+            pm = true;
+        }
+
+        String hour_string = Integer.toString(hour);
+        String minute_string = Integer.toString(minute);
+
+        if(minute < 10){
+            minute_string = "0" + minute_string;
+        }
+
+        if(pm){
+            time = hour_string + ":" + minute_string + " PM";
+        }
+        else{
+            if(hour == 0){
+                hour_string = "12";
+            }
+            time = hour_string + ":" + minute_string + " AM";
+        }
+
+        return time;
     }
 
 }
