@@ -3,19 +3,20 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
+    android:background="@drawable/background_gradient"
     android:id="@+id/root_layout"
-    android:background="@drawable/rain_kf0"
     android:layout_height="match_parent">
+
     <androidx.constraintlayout.widget.Guideline
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/topGuideline"
         android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.15"/>
+        app:layout_constraintGuide_percent="0.05"/>
 
     <TextView
         android:id="@+id/location"
-        app:fontFamily="@font/aqum"
+        android:fontFamily="@font/abeezee"
         android:text="@string/loading_your_current_location"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -27,48 +28,72 @@
         app:layout_constraintTop_toBottomOf="@+id/topGuideline"
         app:layout_constraintWidth_percent="0.8"/>
 
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/timeGuideline"
-        android:layout_width="wrap_content"
+    <ImageView
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.25"/>
+        android:id="@+id/weather_icon"
+        android:src="@drawable/rain"
+        android:layout_marginTop="20dp"
+        app:layout_constraintTop_toBottomOf="@+id/location"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintWidth_percent="0.7" />
+
+    <TextView
+        android:id="@+id/weather_text"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/abeezee"
+        android:text="@string/loading_weather"
+        android:textColor="#FFFFFF"
+        android:gravity="center"
+        android:textSize="24sp"
+        android:layout_marginTop="10dp"
+        app:layout_constraintWidth_percent="0.8"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/weather_icon"/>
 
     <Button
         android:id="@+id/time_selector_label"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:background="#00000000"
+        android:fontFamily="@font/abeezee"
+        android:text="@string/tap_here_to_set_a_reminder_time"
         android:textAllCaps="false"
         android:textColor="#FFFFFF"
-        android:fontFamily="@font/aqum"
         android:textSize="18sp"
-        android:text="@string/tap_here_to_set_a_reminder_time"
-        app:layout_constraintWidth_percent="0.8"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/timeGuideline" />
+        app:layout_constraintTop_toBottomOf="@+id/weather_text"
+        app:layout_constraintWidth_percent="0.8" />
 
-    <androidx.constraintlayout.widget.Guideline
-        android:layout_width="wrap_content"
+    <ImageView
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:id="@+id/messageGuideline"
-        android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.45"/>
+        android:id="@+id/umbrella_icon"
+        android:src="@drawable/umbrella_yes"
+        app:layout_constraintTop_toBottomOf="@+id/time_selector_label"
+        app:layout_constraintBottom_toTopOf="@+id/message"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintWidth_percent="0.5"/>
 
     <TextView
         android:id="@+id/message"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        app:fontFamily="@font/aqum"
+        android:fontFamily="@font/abeezee"
         android:text="@string/loading_weather"
         android:textColor="#FFFFFF"
         android:gravity="center"
         android:textSize="18sp"
+        android:layout_marginBottom="20dp"
         app:layout_constraintWidth_percent="0.8"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/messageGuideline" />
+        app:layout_constraintBottom_toTopOf="@id/refreshGuideline"/>
 
     <androidx.constraintlayout.widget.Guideline
         android:layout_width="wrap_content"
@@ -82,7 +107,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:paddingHorizontal="50dp"
-        android:fontFamily="@font/aqum"
+        android:fontFamily="@font/abeezee"
+        android:textSize="22sp"
+        android:textAllCaps="false"
         android:background="@drawable/button_style"
         android:text="@string/refresh"
         android:textColor="#FFFFFF"

@@ -131,9 +131,9 @@ public class ReminderService extends IntentService {
                                     SharedPreferences sharedPreferences = getSharedPreferences("Prefs", 0);
                                     sharedPreferences.edit().putString("loc_string", location_info).apply();
 
-                                    boolean rain = determineRain(response);
-                                    if(rain) {
-                                        showReminder();
+                                    int weather = determineUmbrella(response);
+                                    if(weather != R.string.sunny) {
+                                        showReminder(weather);
                                     }
 
                                     stopForeground(true);
@@ -152,8 +152,7 @@ public class ReminderService extends IntentService {
         });
     }
 
-    private boolean determineRain(String response) {
-        boolean bring = false;
+    private int determineUmbrella(String response) {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
 
         Calendar cal = Calendar.getInstance();
@@ -170,15 +169,25 @@ public class ReminderService extends IntentService {
 
         int tomorrow_end = response.lastIndexOf(tomorrow_string);
 
+        int forecast = R.string.sunny;
+
         if (tomorrow_end != -1) {
             String tomorrow_response = response.substring(0, tomorrow_end);
-            bring = tomorrow_response.contains("rain");
+            if (tomorrow_response.contains("rain")) {
+                forecast = R.string.forecast_rain;
+            }
+            else if(tomorrow_response.contains("storm")) {
+                forecast = R.string.forecast_storms;
+            }
+            else if(tomorrow_response.contains("snow")) {
+                forecast = R.string.forecast_snow;
+            }
         }
 
-        return bring;
+        return forecast;
     }
 
-    private void showReminder() {
+    private void showReminder(int weather_string) {
         String CHANNEL_ID = "umbrella_reminder";
         NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext(), CHANNEL_ID);
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
@@ -197,7 +206,7 @@ public class ReminderService extends IntentService {
         PendingIntent pendingIntent = getActivity(getApplicationContext(), 0, intent, 0);
 
         builder.setSmallIcon(R.drawable.notification_icon)
-                .setContentTitle("Rain in the forecast!")
+                .setContentTitle(getString(weather_string))
                 .setContentText(getString(R.string.umbrella_yes))
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setContentIntent(pendingIntent)

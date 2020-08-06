@@ -29,4 +29,12 @@
     <string name="loading_your_current_location">Loading your current location…</string>
     <string name="loading_weather">Loading weather…</string>
     <string name="selected_reminder_time">Selected reminder time: %s</string>
+    <string name="rain">Rain</string>
+    <string name="sunny">Sunny</string>
+    <string name="storms">Storms</string>
+    <string name="snow">Snow</string>
+    <string name="cloudy">Cloudy</string>
+    <string name="forecast_rain">Rain in the forecast today</string>
+    <string name="forecast_storms">Storms in the forecast today</string>
+    <string name="forecast_snow">Snow in the forecast today</string>
 </resources>

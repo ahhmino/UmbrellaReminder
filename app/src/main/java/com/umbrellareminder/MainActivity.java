@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.widget.ContentLoadingProgressBar;
 
 import android.Manifest;
 import android.app.AlarmManager;
@@ -21,6 +22,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.transition.TransitionManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -200,24 +202,57 @@ public class MainActivity extends AppCompatActivity implements TimePickerDialog.
 
         int tomorrow_end = response.lastIndexOf(tomorrow_string);
 
+
+        ImageView weather_icon = findViewById(R.id.weather_icon);
+        ImageView umbrella_icon = findViewById(R.id.umbrella_icon);
+        TextView weather_text = findViewById(R.id.weather_text);
+        Drawable new_weather = ContextCompat.getDrawable(this, R.drawable.rain);
+        Drawable umbrella_choice;
+        int new_weather_text = R.string.rain;
+
         if (tomorrow_end != -1) {
             String tomorrow_response = response.substring(0, tomorrow_end);
-
             if (tomorrow_response.contains("rain")) {
                 bring = true;
-            } else {
+            }
+            else if(tomorrow_response.contains("storm")) {
+                bring = true;
+                new_weather = ContextCompat.getDrawable(this, R.drawable.storm);
+                new_weather_text = R.string.storms;
+            }
+            else if(tomorrow_response.contains("snow")) {
+                bring = true;
+                new_weather = ContextCompat.getDrawable(this, R.drawable.snow);
+                new_weather_text = R.string.snow;
+            }
+            else if(tomorrow_response.contains("\" clouds\",")) {
                 bring = false;
+                new_weather = ContextCompat.getDrawable(this, R.drawable.cloudy);
+                new_weather_text = R.string.cloudy;
+            }
+            else {
+                bring = false;
+                new_weather = ContextCompat.getDrawable(this, R.drawable.sunny);
+                new_weather_text = R.string.sunny;
             }
         }
 
         TextView message = findViewById(R.id.message);
+
+        TransitionManager.beginDelayedTransition(findViewById(android.R.id.content));
+        weather_icon.setImageDrawable(new_weather);
+        weather_text.setText(new_weather_text);
+
         if (bring) {
             message.setText(R.string.umbrella_yes);
+            umbrella_choice = ContextCompat.getDrawable(this, R.drawable.umbrella_yes);
         }
         else{
             message.setText(R.string.umbrella_no);
+            umbrella_choice = ContextCompat.getDrawable(this, R.drawable.umbrella_no);
         }
 
+        umbrella_icon.setImageDrawable(umbrella_choice);
     }
 
     void setLocation(String response) {
