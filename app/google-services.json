@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "241964545560",
+    "firebase_url": "https://umbrella-reminder-284501.firebaseio.com",
+    "project_id": "umbrella-reminder-284501",
+    "storage_bucket": "umbrella-reminder-284501.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:241964545560:android:db637e119a6008397df56d",
+        "android_client_info": {
+          "package_name": "com.umbrella_reminder"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "241964545560-sjc40iqshqqob4smce1c7cj4234bmgd9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.umbrella_reminder",
+            "certificate_hash": "587fc85519a827a9badbbe70f62a0d0233027746"
+          }
+        },
+        {
+          "client_id": "241964545560-6eks92069llcd94djh6up8rh1a0vahrs.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD4HqqEcERa3P5RVXkj1g65DSQFLdFkV1o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "241964545560-6eks92069llcd94djh6up8rh1a0vahrs.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
