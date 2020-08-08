@@ -73,14 +73,12 @@ public class ReminderService extends IntentService {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.notification_icon)
                 .setContentTitle("Getting location and weather information")
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setContentIntent(pendingIntent)
                 .setChannelId(CHANNEL_ID)
                 .setAutoCancel(true);
 
         Notification noti = builder.build();
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
-        notificationManager.notify(0, noti);
         startForeground(1, noti);
 
         Calendar next_alarm = Calendar.getInstance();
@@ -132,13 +130,13 @@ public class ReminderService extends IntentService {
                                     sharedPreferences.edit().putString("loc_string", location_info).apply();
 
                                     int weather = determineUmbrella(response);
+
                                     if(weather != R.string.sunny) {
                                         showReminder(weather);
                                     }
 
                                     stopForeground(true);
                                     stopSelf();
-
                                 }, error -> Log.d("ERROR", "Connection Error"));
 
                                 requestQueue.add(stringRequest);

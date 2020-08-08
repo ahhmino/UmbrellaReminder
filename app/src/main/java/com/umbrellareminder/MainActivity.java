@@ -225,7 +225,7 @@ public class MainActivity extends AppCompatActivity implements TimePickerDialog.
                 new_weather = ContextCompat.getDrawable(this, R.drawable.snow);
                 new_weather_text = R.string.snow;
             }
-            else if(tomorrow_response.contains("\" clouds\",")) {
+            else if(tomorrow_response.contains(" clouds")) {
                 bring = false;
                 new_weather = ContextCompat.getDrawable(this, R.drawable.cloudy);
                 new_weather_text = R.string.cloudy;
